@@ -1,4 +1,5 @@
 const { User, Thought } = require('../models');
+const { AuthenticationError } = require('apollo-server-express');
 
 // resolvers is a single function that returns ALL of the data associated with a user
 const resolvers = {
@@ -43,7 +44,21 @@ const resolvers = {
 
       return user;
     },
-    login: async () => {}
+    login: async (parents, { email, password }) => {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        throw new AuthenticationError('Incorrect credentials');
+      }
+
+      const correctPw = await user.isCorrectPassword(password);
+
+      if (!correctPw) {
+        throw new AuthenticationError('Incorrect credentials');
+      }
+
+      return user;
+    }
   }
 };
 

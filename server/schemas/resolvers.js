@@ -1,5 +1,6 @@
 const { User, Thought } = require('../models');
 const { AuthenticationError } = require('apollo-server-express');
+const { signToken } = require('../utils/auth');
 
 // resolvers is a single function that returns ALL of the data associated with a user
 const resolvers = {
@@ -41,8 +42,10 @@ const resolvers = {
   Mutation: {
     addUser: async (parent, args) => {
       const user = await User.create(args);
+      // update mutation resolvers to sign token and return object that combines token with user data
+      const token = signToken(user);
 
-      return user;
+      return { token, user };
     },
     login: async (parents, { email, password }) => {
       const user = await User.findOne({ email });
@@ -57,7 +60,9 @@ const resolvers = {
         throw new AuthenticationError('Incorrect credentials');
       }
 
-      return user;
+      // add token to login mutation as well
+      const token = signToken(user);
+      return { token, user };
     }
   }
 };
